@@ -2,6 +2,8 @@
 
 Imports and timeremap xdts files into Adobe After Effects
 
+After Effectsスクリプトの機能はXDTSファイルで自動TimeRemapです
+
 ## Usage
 ![image](https://user-images.githubusercontent.com/115112505/195144996-5333424f-1a44-4bd8-8f8f-6641ab4203ae.png)
 
