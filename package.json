@@ -1,0 +1,23 @@
+{
+  "name": "xdtsimport",
+  "version": "0.0.1",
+  "description": "Imports and timeremap xdts files into Adobe After Effects",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/StudioCell/XdtsImport.git"
+  },
+  "author": "58",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/StudioCell/XdtsImport/issues"
+  },
+  "homepage": "https://github.com/StudioCell/XdtsImport#readme",
+  "devDependencies": {
+    "typescript": "^4.8.4",
+    "types-for-adobe": "^7.0.6"
+  }
+}
