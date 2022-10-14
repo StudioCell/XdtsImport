@@ -17,3 +17,5 @@ After Effectsスクリプトの機能はXDTSファイルで自動TimeRemapです
 
 3. Each cell animation layer is imported as image sequences and added to a new composition
 4. The timeline information from the xdts file is then used to time remap all the frames
+## License
+Project under MIT License
