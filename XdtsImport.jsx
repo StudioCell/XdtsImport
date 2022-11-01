@@ -1,16 +1,16 @@
 // MIT License
-// 
+//
 // Copyright (c) 2022 Studio Cell
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all
 // copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -25,8 +25,14 @@
   // Imports Footage with the Toei Digital Timesheet file format v7 (*.xdts)
   //
   // Author: 58 <digits58 at gmail dot com>
-  // Changelog: 
+  // Changelog:
   //     v0.0.1 - 2022/09/22: Initial release
+  //
+  //     v0.0.2 - 2022/11/01:
+  //
+  //     Cells imported into their own folder, scan images for
+  //     resolutions and select at the end, fix composition pixel
+  //     aspect ratio, fix imports with no cells or only null cell
   //
 
   //
@@ -41,6 +47,11 @@
   //  https://www.ecma-international.org/publications-and-standards/standards/ecma-262/
   //
   // We loosely implement a few missing features >ES3
+
+  var VERSION = "0.0.2";
+  var LAST_COMMIT = "";
+  var COMMIT_DATE = "";
+
   function IsCallable(argument) {
     if (argument.call != undefined) return true;
     return false;
@@ -55,7 +66,7 @@
   /**
    * Returns first element in the array the predicate matches
    * @param {function} predicate function(element[idx], idx, elementArray)
-   * @returns {element | undefined} element found or the 
+   * @returns {element | undefined} element found or the
    */
   Array.prototype.find = function (predicate) {
     if (!IsCallable(predicate)) throw TypeError;
@@ -69,7 +80,7 @@
   var img = File.decode(imgString);
   function createMainWindow() {
     /*
-    Code for Import https://scriptui.joonas.me — (Triple click to select): 
+    Code for Import https://scriptui.joonas.me — (Triple click to select):
     {"items":{"item-0":{"id":0,"type":"Dialog","parentId":false,"style":{"enabled":true,"varName":"mainWindow","windowType":"Dialog","creationProps":{"su1PanelCoordinates":false,"maximizeButton":false,"minimizeButton":false,"independent":false,"closeButton":true,"borderless":false,"resizeable":false},"text":"XdtsImport","preferredSize":[0,0],"margins":16,"orientation":"column","spacing":10,"alignChildren":["fill","top"]}},"item-2":{"id":2,"type":"Group","parentId":28,"style":{"enabled":true,"varName":null,"preferredSize":[0,0],"margins":0,"orientation":"row","spacing":10,"alignChildren":["center","center"],"alignment":null}},"item-3":{"id":3,"type":"Button","parentId":2,"style":{"enabled":false,"varName":"importBtn","text":"Import","justify":"center","preferredSize":[0,0],"alignment":null,"helpTip":null}},"item-4":{"id":4,"type":"Button","parentId":2,"style":{"enabled":true,"varName":"cancelBtn","text":"Cancel","justify":"center","preferredSize":[0,0],"alignment":null,"helpTip":null}},"item-5":{"id":5,"type":"Divider","parentId":28,"style":{"enabled":true,"varName":null}},"item-8":{"id":8,"type":"DropDownList","parentId":28,"style":{"enabled":false,"varName":"timelineList","text":"DropDownList","listItems":"Timeline","preferredSize":[0,0],"alignment":"fill","selection":0,"helpTip":null}},"item-9":{"id":9,"type":"Button","parentId":28,"style":{"enabled":true,"varName":"openBtn","text":"Open XDTS","justify":"center","preferredSize":[0,0],"alignment":null,"helpTip":null}},"item-23":{"id":23,"type":"Image","parentId":25,"style":{"enabled":true,"varName":"logoImage","image":[""],"alignment":null,"helpTip":""}},"item-25":{"id":25,"type":"Panel","parentId":0,"style":{"enabled":true,"varName":"aboutPanel","creationProps":{"borderStyle":"etched","su1PanelCoordinates":false},"text":"About","preferredSize":[0,0],"margins":5,"orientation":"row","spacing":10,"alignChildren":["left","center"],"alignment":null}},"item-27":{"id":27,"type":"StaticText","parentId":25,"style":{"enabled":true,"varName":"versionText","creationProps":{},"softWrap":false,"text":"version: 0.0.1\nlast commit:\ncommit date:","justify":"left","preferredSize":[0,0],"alignment":null,"helpTip":null}},"item-28":{"id":28,"type":"Group","parentId":0,"style":{"enabled":true,"varName":null,"preferredSize":[0,0],"margins":0,"orientation":"column","spacing":10,"alignChildren":["fill","center"],"alignment":null}}},"order":[0,25,23,27,28,9,8,5,2,3,4],"settings":{"importJSON":true,"indentSize":false,"cepExport":false,"includeCSSJS":true,"showDialog":true,"functionWrapper":false,"afterEffectsDockable":false,"itemReferenceList":"None"},"activeId":23}
     */
 
@@ -99,9 +110,9 @@
     versionText.alignChildren = ["left", "center"];
     versionText.spacing = 0;
 
-    versionText.add("statictext", undefined, "version: 0.0.1");
-    versionText.add("statictext", undefined, "last commit:");
-    versionText.add("statictext", undefined, "commit date:");
+    versionText.add("statictext", undefined, "version: " + VERSION);
+    versionText.add("statictext", undefined, "last commit:" + LAST_COMMIT);
+    versionText.add("statictext", undefined, "commit date:" + COMMIT_DATE);
 
     // GROUP1
     // ======
@@ -141,6 +152,75 @@
     return mainWindow;
   }
 
+  function createCompWindow() {
+    /*
+    Code for Import https://scriptui.joonas.me — (Triple click to select):
+    {"items":{"item-0":{"id":0,"type":"Dialog","parentId":false,"style":{"enabled":true,"varName":"compWindow","windowType":"Dialog","creationProps":{"su1PanelCoordinates":false,"maximizeButton":false,"minimizeButton":false,"independent":false,"closeButton":true,"borderless":false,"resizeable":false},"text":"XdtsImport","preferredSize":[0,0],"margins":16,"orientation":"column","spacing":10,"alignChildren":["fill","top"]}},"item-2":{"id":2,"type":"Group","parentId":28,"style":{"enabled":true,"varName":null,"preferredSize":[0,0],"margins":0,"orientation":"row","spacing":10,"alignChildren":["center","center"],"alignment":null}},"item-3":{"id":3,"type":"Button","parentId":2,"style":{"enabled":false,"varName":"confirmBtn","text":"Confirm","justify":"center","preferredSize":[0,0],"alignment":null,"helpTip":null}},"item-4":{"id":4,"type":"Button","parentId":2,"style":{"enabled":true,"varName":"cancelBtn","text":"Cancel","justify":"center","preferredSize":[0,0],"alignment":null,"helpTip":null}},"item-5":{"id":5,"type":"Divider","parentId":28,"style":{"enabled":true,"varName":null}},"item-23":{"id":23,"type":"Image","parentId":25,"style":{"enabled":true,"varName":"logoImage","image":[""],"alignment":null,"helpTip":""}},"item-25":{"id":25,"type":"Panel","parentId":0,"style":{"enabled":true,"varName":"aboutPanel","creationProps":{"borderStyle":"etched","su1PanelCoordinates":false},"text":"About","preferredSize":[0,0],"margins":5,"orientation":"row","spacing":10,"alignChildren":["left","center"],"alignment":null}},"item-27":{"id":27,"type":"StaticText","parentId":25,"style":{"enabled":true,"varName":"versionText","creationProps":{},"softWrap":false,"text":"version: 0.0.1\nlast commit:\ncommit date:","justify":"left","preferredSize":[0,0],"alignment":null,"helpTip":null}},"item-28":{"id":28,"type":"Group","parentId":0,"style":{"enabled":true,"varName":null,"preferredSize":[0,0],"margins":0,"orientation":"column","spacing":10,"alignChildren":["fill","center"],"alignment":null}},"item-29":{"id":29,"type":"ListBox","parentId":28,"style":{"enabled":true,"varName":"resolutionList","creationProps":{"multiselect":false,"numberOfColumns":1,"columnWidths":"[]","columnTitles":"[]","showHeaders":false},"listItems":"","preferredSize":[0,0],"alignment":null,"helpTip":null}}},"order":[0,25,23,27,28,29,5,2,3,4],"settings":{"importJSON":true,"indentSize":false,"cepExport":false,"includeCSSJS":true,"showDialog":true,"functionWrapper":false,"afterEffectsDockable":false,"itemReferenceList":"None"},"activeId":0}
+    */
+
+    // COMPWINDOW
+    // ==========
+    var compWindow = new Window("dialog");
+    compWindow.text = "XdtsImport";
+    compWindow.orientation = "column";
+    compWindow.alignChildren = ["fill", "top"];
+    compWindow.spacing = 10;
+    compWindow.margins = 16;
+
+    // ABOUTPANEL
+    // ==========
+    var aboutPanel = compWindow.add("panel", undefined, undefined, { name: "aboutPanel" });
+    aboutPanel.text = "About";
+    aboutPanel.orientation = "row";
+    aboutPanel.alignChildren = ["left", "center"];
+    aboutPanel.spacing = 10;
+    aboutPanel.margins = 5;
+
+    var logoImage = aboutPanel.add("image", undefined, img, { name: "logoImage" });
+
+    var versionText = aboutPanel.add("group", undefined, { name: "versionText" });
+    versionText.getText = function () { var t = []; for (var n = 0; n < versionText.children.length; n++) { var text = versionText.children[n].text || ''; if (text === '') text = ' '; t.push(text); } return t.join('\n'); };
+    versionText.orientation = "column";
+    versionText.alignChildren = ["left", "center"];
+    versionText.spacing = 0;
+
+    versionText.add("statictext", undefined, "version: " + VERSION);
+    versionText.add("statictext", undefined, "last commit:" + LAST_COMMIT);
+    versionText.add("statictext", undefined, "commit date:" + COMMIT_DATE);
+
+    // GROUP1
+    // ======
+    var group1 = compWindow.add("group", undefined, { name: "group1" });
+    group1.orientation = "column";
+    group1.alignChildren = ["fill", "center"];
+    group1.spacing = 10;
+    group1.margins = 0;
+
+    var resolutionList = group1.add("dropdownlist", undefined, undefined, { name: "resolutionList" });
+
+    var divider1 = group1.add("panel", undefined, undefined, { name: "divider1" });
+    divider1.alignment = "fill";
+
+    // GROUP2
+    // ======
+    var group2 = group1.add("group", undefined, { name: "group2" });
+    group2.orientation = "row";
+    group2.alignChildren = ["center", "center"];
+    group2.spacing = 10;
+    group2.margins = 0;
+
+    var confirmBtn = group2.add("button", undefined, undefined, { name: "confirmBtn" });
+    confirmBtn.enabled = false;
+    confirmBtn.text = "Confirm";
+
+    var cancelBtn = group2.add("button", undefined, undefined, { name: "cancelBtn" });
+    cancelBtn.text = "Cancel";
+
+    return compWindow;
+
+
+  }
+
   function openXdtsFile() {
     var xdtsFile = new File(".").openDlg("Import XDTS...", "*.xdts", false);
     var xdts = parseXdtsFile(xdtsFile.absoluteURI);
@@ -152,6 +232,11 @@
     var proj = app.project;
     var scriptName = "XdtsImport";
     var scriptsFile = new File($.fileName);
+
+    var defaultFrameRate = 24;
+    var frameTime = (1 / 24);
+    var frameWidth = 1920;
+    var frameHeight = 1080;
 
     var mainWindow = createMainWindow();
     mainWindow.group1.openBtn.onClick = function () {
@@ -184,17 +269,34 @@
 
         var totalFrames = timeline["duration"];
         var duration = frameTime*totalFrames;
-        var compItem = app.project.items.addComp("Timeline 1", width, height, aspectRatio, duration, frameRate);
+        var compItem = app.project.items.addComp(timeline["name"], width, height, 1.0, duration, frameRate);
         compItem.bgColor = [1.0, 1.0, 1.0];
+        mainWindow.compItem = compItem;
+        var folderItem = app.project.items.addFolder(timeline["name"]);
+        mainWindow.footageResolutions = [];
 
         celField["tracks"].forEach(function (track) {
           var trackNum = track["trackNo"];
           var trackName = trackNames[trackNum];
+
+          // checks if no frame or only null frame
+          if (track["frames"].length == 0) return;
+          if (track["frames"].length == 1) {
+            var frame = track["frames"][0]["data"].find(function (d) {return d["id"] == 0;})["values"][0]-1;
+            if (isNaN(frame)) return;
+          }
+
           var folder = new Folder(mainWindow.xdts.folder.absoluteURI);
           folder.changePath(trackName);
-          var footage = importFootage(folder.absoluteURI);
-          footage.name = trackName;
-          var avLayer = addFootage(compItem, footage);
+          var footageItem = importFootage(folder.absoluteURI);
+          footageItem.name = trackName;
+          footageItem.parentFolder = folderItem;
+          if (mainWindow.footageResolutions.find(function (res) {
+            return res["width"] == footageItem.width && res["height"] == footageItem.height;
+          }) == undefined) {
+            mainWindow.footageResolutions.push({"width": footageItem.width, "height": footageItem.height});
+          };
+          var avLayer = addFootage(compItem, footageItem);
           track["frames"].forEach(function (frame) {
             var inputFrame = frame["data"].find(function (d) { return d["id"] == 0; })["values"][0]-1;
             var outputFrame = frame["frame"];
@@ -208,11 +310,42 @@
             avLayer.outPoint = duration;
           }
         });
+        mainWindow.close();
       } catch (e) {
         alert(e, "Error", true);
       }
     };
     mainWindow.show();
+    var compWindow = createCompWindow();
+    mainWindow.footageResolutions.forEach(function (res) {
+      compWindow.group1.resolutionList.add("item", res["width"].toString() + "x" + res["height"].toString());
+      compWindow.group1.resolutionList.selection = 0;
+      compWindow.group1.group2.confirmBtn.enabled = true;
+    });
+    compWindow.group1.group2.confirmBtn.onClick = function () {
+      var theComp = mainWindow.compItem;
+      var origCompSize = [theComp.width, theComp.height];
+      var null3DLayer = theComp.layers.addNull();
+      null3DLayer.threeDLayer = true;
+      null3DLayer.position.setValue([origCompSize[0] / 2, origCompSize[1] / 2, 0]);
+
+      for (var i = 1; i <= theComp.numLayers; i++) {
+        var curLayer = theComp.layer(i);
+        if (curLayer != null3DLayer && curLayer.parent == null) {
+          curLayer.parent = null3DLayer;
+        }
+      }
+      var newCompSize = [
+        mainWindow.footageResolutions[compWindow.group1.resolutionList.selection.index]["width"],
+        mainWindow.footageResolutions[compWindow.group1.resolutionList.selection.index]["height"],
+      ];
+      theComp.width = newCompSize[0];
+      theComp.height = newCompSize[1];
+      null3DLayer.position.setValue([newCompSize[0] / 2, newCompSize[1] / 2, 0]);
+      null3DLayer.remove();
+      compWindow.close();
+    };
+    compWindow.show();
   }
 
   function parseXdtsFile(xdtsFilePath) {
@@ -239,12 +372,6 @@
       xdtsFile.close();
     }
   }
-  var frameRate = 24;
-  var frameTime = (1/24);
-  var width = 1280;
-  var height = 720;
-  var aspectRatio = width/height;
-
   function importFootage(folderPath) {
     var importOptions = new ImportOptions();
     // assumes the first file will allow grabbing the rest
@@ -272,7 +399,6 @@
    * @param {number} outputFrame [0..]
    */
   function remapFrame(layer, inputFrame, outputFrame) {
-    if (layer.name == "A") $.writeln(inputFrame + ","+outputFrame);
     var key = layer.timeRemap.addKey(frameTime * outputFrame);
     layer.timeRemap.setValueAtKey(key, frameTime * inputFrame);
     layer.timeRemap.setInterpolationTypeAtKey(key, KeyframeInterpolationType.HOLD);
