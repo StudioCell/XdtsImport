@@ -223,6 +223,7 @@
 
   function openXdtsFile() {
     var xdtsFile = new File(".").openDlg("Import XDTS...", "*.xdts", false);
+    if (xdtsFile == null) return;
     var xdts = parseXdtsFile(xdtsFile.absoluteURI);
     xdts.folder = xdtsFile.parent;
     return xdts;
