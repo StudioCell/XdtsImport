@@ -317,6 +317,7 @@
       }
     };
     mainWindow.show();
+    if (mainWindow.compItem == undefined) return;
     var compWindow = createCompWindow();
     mainWindow.footageResolutions.forEach(function (res) {
       compWindow.group1.resolutionList.add("item", res["width"].toString() + "x" + res["height"].toString());
