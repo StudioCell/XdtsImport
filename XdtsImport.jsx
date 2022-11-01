@@ -49,8 +49,8 @@
   // We loosely implement a few missing features >ES3
 
   var VERSION = "0.0.2";
-  var LAST_COMMIT = "";
-  var COMMIT_DATE = "";
+  var LAST_COMMIT = "b6ebce4";
+  var COMMIT_DATE = "2022/11/01";
 
   function IsCallable(argument) {
     if (argument.call != undefined) return true;
@@ -111,8 +111,8 @@
     versionText.spacing = 0;
 
     versionText.add("statictext", undefined, "version: " + VERSION);
-    versionText.add("statictext", undefined, "last commit:" + LAST_COMMIT);
-    versionText.add("statictext", undefined, "commit date:" + COMMIT_DATE);
+    versionText.add("statictext", undefined, "last commit: " + LAST_COMMIT);
+    versionText.add("statictext", undefined, "commit date: " + COMMIT_DATE);
 
     // GROUP1
     // ======
@@ -185,8 +185,8 @@
     versionText.spacing = 0;
 
     versionText.add("statictext", undefined, "version: " + VERSION);
-    versionText.add("statictext", undefined, "last commit:" + LAST_COMMIT);
-    versionText.add("statictext", undefined, "commit date:" + COMMIT_DATE);
+    versionText.add("statictext", undefined, "last commit: " + LAST_COMMIT);
+    versionText.add("statictext", undefined, "commit date: " + COMMIT_DATE);
 
     // GROUP1
     // ======
