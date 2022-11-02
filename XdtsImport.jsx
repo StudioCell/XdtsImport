@@ -51,9 +51,9 @@
   //
   // We loosely implement a few missing features >ES3
 
-  var VERSION = "0.0.2";
-  var LAST_COMMIT = "b6ebce4";
-  var COMMIT_DATE = "2022/11/01";
+  var VERSION = "0.0.3";
+  var LAST_COMMIT = "030d9df";
+  var COMMIT_DATE = "2022/11/02";
 
   function IsCallable(argument) {
     if (argument.call != undefined) return true;
