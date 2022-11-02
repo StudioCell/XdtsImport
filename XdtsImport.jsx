@@ -34,8 +34,11 @@
   //     resolutions and select at the end, fix composition pixel
   //     aspect ratio, fix imports with no cells or only null cell
   //
-
+  //     v0.0.3 - 2022/11/02:
   //
+  //     Fixed a bug with missing folders and ignore desktop.ini
+  //
+
   // ExtendScript implements the JavaScript language according to the ECMA-262
   // specification. The After Effects scripting engine supports the 3rd Edition
   // of the ECMA-262 Standard, including its notational and lexical conventions,
@@ -229,15 +232,15 @@
     return xdts;
   }
 
+  var frameRate = 24;
+  var frameTime = (1 / 24);
+  var frameWidth = 1920;
+  var frameHeight = 1080;
+
   function xdtsImport() {
     var proj = app.project;
     var scriptName = "XdtsImport";
     var scriptsFile = new File($.fileName);
-
-    var defaultFrameRate = 24;
-    var frameTime = (1 / 24);
-    var frameWidth = 1920;
-    var frameHeight = 1080;
 
     var mainWindow = createMainWindow();
     mainWindow.group1.openBtn.onClick = function () {
@@ -270,7 +273,7 @@
 
         var totalFrames = timeline["duration"];
         var duration = frameTime*totalFrames;
-        var compItem = app.project.items.addComp(timeline["name"], width, height, 1.0, duration, frameRate);
+        var compItem = app.project.items.addComp(timeline["name"], frameWidth, frameHeight, 1.0, duration, frameRate);
         compItem.bgColor = [1.0, 1.0, 1.0];
         mainWindow.compItem = compItem;
         var folderItem = app.project.items.addFolder(timeline["name"]);
@@ -289,9 +292,12 @@
 
           var folder = new Folder(mainWindow.xdts.folder.absoluteURI);
           folder.changePath(trackName);
+
           var footageItem = importFootage(folder.absoluteURI);
+          if (footageItem == undefined) return;
           footageItem.name = trackName;
           footageItem.parentFolder = folderItem;
+
           if (mainWindow.footageResolutions.find(function (res) {
             return res["width"] == footageItem.width && res["height"] == footageItem.height;
           }) == undefined) {
@@ -376,14 +382,21 @@
   }
   function importFootage(folderPath) {
     var importOptions = new ImportOptions();
-    // assumes the first file will allow grabbing the rest
-    importOptions.file = new Folder(folderPath).getFiles()[0];
-    importOptions.importAs = ImportAsType.FOOTAGE;
-    importOptions.sequence = true;
+    try {
+      var files = new Folder(folderPath).getFiles();
 
-    var footageItem = app.project.importFile(importOptions);
-    footageItem.mainSource.conformFrameRate = frameRate;
-    return footageItem;
+      // assumes the first file will allow grabbing the rest, skipping desktop.ini
+      importOptions.file = (files[0].name.substring(files[0].name.length - 4) != ".ini") ? files[0] : files[1];
+      importOptions.importAs = ImportAsType.FOOTAGE;
+      importOptions.sequence = true;
+      importOptions.forceAlphabetical = true;
+
+      var footageItem = app.project.importFile(importOptions);
+      footageItem.mainSource.conformFrameRate = frameRate;
+      return footageItem;
+    } catch(e) {
+      return undefined;
+    }
   }
 
   function addFootage(comp, item) {
